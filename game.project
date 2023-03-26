@@ -1,0 +1,29 @@
+[bootstrap]
+main_collection = /main/board.collectionc
+
+[script]
+shared_state = 1
+
+[display]
+width = 640
+height = 960
+high_dpi = 1
+
+[android]
+input_method = HiddenInputField
+
+[project]
+title = m3dview
+custom_resources = /assets
+
+[sprite]
+max_count = 512
+
+[library]
+include_dirs = 
+
+[particle_fx]
+max_count = 512
+max_emitter_count = 512
+max_particle_count = 2048
+

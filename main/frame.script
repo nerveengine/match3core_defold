@@ -1,0 +1,14 @@
+go.property("part", hash("none"))
+
+local normal_scale = 1
+
+function init(self)
+	go.set_scale(normal_scale)        -- render scaled down
+	self.rot = go.get_rotation()
+
+	if self.part ~= nil then
+		msg.post("#sprite", "play_animation", { id = self.part })
+	else
+		msg.post("#sprite", "disable")
+	end
+end

@@ -1,0 +1,104 @@
+local normal_scale = vmath.vector3(1)
+local zoomed_scale = vmath.vector3(1.2)
+local score_zoom_duration = 0.2
+local score_zoom_delay = 0
+local score_particle_duration = 0.2
+local score_particle_delay = 0.2
+
+local score = 0
+
+-- function init(self)
+-- 	-- Add initialization code here
+-- 	-- Learn more: https://defold.com/manuals/script/
+-- 	-- Remove this function if not needed
+-- end
+-- 
+-- function final(self)
+-- 	-- Add finalization code here
+-- 	-- Learn more: https://defold.com/manuals/script/
+-- 	-- Remove this function if not needed
+-- end
+-- 
+-- function update(self, dt)
+-- 	-- Add update code here
+-- 	-- Learn more: https://defold.com/manuals/script/
+-- 	-- Remove this function if not needed
+-- end
+
+local function scoreParticleCallback(node)
+	gui.delete_node(node)
+end
+
+local function setScorePoints(new_score)
+	score = new_score
+	local score_text_node = gui.get_node("score")
+	gui.set_text(score_text_node, string.format("%06d",score))
+	gui.animate(score_text_node, "scale", zoomed_scale, gui.EASING_INSINE, score_zoom_duration, score_zoom_delay, nil, gui.PLAYBACK_ONCE_PINGPONG)
+end
+
+local function addScorePoints(points)
+	local score_text_node = gui.get_node("score")
+	local score_particle_pos = gui.get_position(score_text_node)
+	local score_particle = gui.new_text_node(score_particle_pos, points)
+	gui.set_font(score_particle, "score")
+	
+	gui.set_color(score_particle, vmath.vector4(1, 1, 0, 1.0))
+	if points>=100 then
+		gui.set_color(score_particle, vmath.vector4(1, 0, 1, 1.0))
+	elseif points>=500 then
+		gui.set_color(score_particle, vmath.vector4(0, 1, 1, 1.0))
+	end
+
+	score_particle_pos.x = score_particle_pos.x + math.random(-100, 100)
+	score_particle_pos.y = score_particle_pos.y + math.random(-100, 100)
+	
+	gui.animate(score_particle, "position", score_particle_pos, gui.EASING_INSINE, score_particle_duration, 0)
+	gui.animate(score_particle, gui.PROP_COLOR, vmath.vector4(0, 0, 0, 0), gui.EASING_LINEAR, score_particle_duration, score_particle_delay, function ()
+		scoreParticleCallback(score_particle)
+	end)
+
+	setScorePoints(score + points)
+end
+
+
+
+function on_message(self, message_id, message, sender)
+	-- Add message-handling code here
+	-- Learn more: https://defold.com/manuals/message-passing/
+	-- Remove this function if not needed
+	if message_id == hash("add_score") then
+		addScorePoints(message.score)
+	elseif message_id == hash("set_score") then
+		setScorePoints(message.score)
+	elseif message_id == hash("bonus_score") then
+		-- бонусные очки. начислим их с задержкой
+		-- задержка должна соответствовать анимации после которой начисляются очки
+		-- Сейчас стоит 0.5 такая же как у пролёта фишек. Может лучше и не делать задержку?
+		local delay = 0.5
+		if message.delay  then
+			delay = message.delay
+		end
+		timer.delay(delay, false, function ()
+			addScorePoints(message.score)
+		end)
+	end
+	
+end
+
+-- function on_input(self, action_id, action)
+-- 	-- Add input-handling code here. The game object this script is attached to
+-- 	-- must have acquired input focus:
+-- 	--
+-- 	--    msg.post(".", "acquire_input_focus")
+-- 	--
+-- 	-- All mapped input bindings will be received. Mouse and touch input will
+-- 	-- be received regardless of where on the screen it happened.
+-- 	-- Learn more: https://defold.com/manuals/input/
+-- 	-- Remove this function if not needed
+-- end
+-- 
+-- function on_reload(self)
+-- 	-- Add reload-handling code here
+-- 	-- Learn more: https://defold.com/manuals/hot-reload/
+-- 	-- Remove this function if not needed
+-- end

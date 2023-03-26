@@ -1,0 +1,1 @@
+java -jar bob.jar --archive --platform x86_64-win32 resolve distclean build bundle

@@ -1,0 +1,72 @@
+-- block.script
+go.property("color", hash("none"))
+go.property("block_id", -1)
+
+local normal_scale = 1
+local zoomed_scale = 1.2
+local start_scale = 0.01
+local portal_out_scale = 2
+local portal_anim_duration = 0.5
+local travel_duration = 0.5
+
+function init(self)
+	self.normal_scale = go.get_scale_uniform()
+	self.zoomed_scale = go.get_scale_uniform() * zoomed_scale
+	self.start_scale  = go.get_scale_uniform() * start_scale
+	self.portal_out_scale = go.get_scale_uniform() * portal_out_scale
+	go.set_scale(self.start_scale)        -- render scaled down
+	self.rot = go.get_rotation()
+
+	if self.color ~= nil then
+		msg.post("#sprite", "play_animation", { id = self.color })
+		go.animate(".", "scale", go.PLAYBACK_ONCE_FORWARD, self.normal_scale, go.EASING_INOUTSINE, 0.2)
+	else
+		msg.post("#sprite", "disable")
+	end
+end
+
+function on_message(self, message_id, message, sender)
+	if message_id == hash("select") then
+		go.animate(".", "scale", go.PLAYBACK_ONCE_FORWARD, self.zoomed_scale, go.EASING_INOUTSINE, 0.1)
+		local rot = go.get(".", "euler.z")
+		local r = math.random() / 50
+		go.cancel_animations(".", "euler.z")
+		go.animate(".", "euler.z", go.PLAYBACK_LOOP_PINGPONG, rot - 4, go.EASING_INOUTSINE, 0.1 + r, 0.1)
+	elseif message_id == hash("reset") then
+		go.cancel_animations(".", "scale")
+		go.animate(".", "scale", go.PLAYBACK_ONCE_FORWARD, self.normal_scale, go.EASING_INOUTSINE, 0.1)
+		go.cancel_animations(".", "euler.z")
+		go.set_rotation(self.rot)
+		--msg.post("#", "sway")
+	elseif message_id == hash("remove") then
+		go.animate(".", "position.y", go.PLAYBACK_ONCE_FORWARD, 900, go.EASING_OUTSINE, travel_duration)
+		go.animate(".", "position.x", go.PLAYBACK_ONCE_FORWARD, 50, go.EASING_INQUAD, travel_duration, 0, function() -- go.EASING_INEXPO
+			msg.post("/board#board_ui", "add_score", {score = message.score_points})
+			particlefx.play("#block_explosion")
+			go.delete()
+		end)
+	elseif message_id == hash("set_color") then
+		if message.color ~= self.color then
+			self.color = message.color
+			-- этот поворот очень пригождается при отладке
+			go.animate(".", "rotation", go.PLAYBACK_ONCE_FORWARD, vmath.quat_rotation_z(-1.57),  go.EASING_INOUTQUAD, 0.2)
+			msg.post("#sprite", "play_animation", { id = self.color })
+		end
+	elseif message_id == hash("portal_out") then
+		go.animate(".", "scale", go.PLAYBACK_ONCE_FORWARD, self.portal_out_scale, go.EASING_INOUTSINE, portal_anim_duration)
+		go.animate("#sprite", "tint", go.PLAYBACK_ONCE_FORWARD, vmath.vector4(1, 1, 1, 0), go.EASING_LINEAR, portal_anim_duration, 0, function()
+			go.delete()
+		end)
+	elseif message_id == hash("portal_in") then
+		go.set_scale(self.portal_out_scale)
+		go.set("#sprite", "tint", vmath.vector4(1, 1, 1, 0))
+		go.animate(".", "scale", go.PLAYBACK_ONCE_FORWARD, self.normal_scale, go.EASING_INOUTSINE, portal_anim_duration)
+		go.animate("#sprite", "tint", go.PLAYBACK_ONCE_FORWARD, vmath.vector4(1, 1, 1, 1), go.EASING_LINEAR, portal_anim_duration)
+	end
+end
+
+function update(self, dt)
+	-- if self.block_id ~= -1 then
+	-- 	print (self.block_id)
+	-- end
+end

@@ -1,0 +1,43 @@
+-- block.script
+go.property("color", hash("none"))
+go.property("portal_id", -1)
+go.property("portal_in", true)
+
+local portal_scale = 1.2
+
+local colors = {
+	vmath.vector4(1.0, 0.0, 0.0, 1.0),
+	vmath.vector4(0.0, 1.0, 0.0, 1.0),
+	vmath.vector4(0.0, 0.0, 1.0, 1.0),
+	vmath.vector4(1.0, 1.0, 0.0, 1.0),
+	vmath.vector4(1.0, 0.0, 1.0, 1.0),
+	vmath.vector4(0.0, 1.0, 1.0, 1.0),
+	vmath.vector4(1.0, 1.0, 1.0, 1.0),
+}
+
+function init(self)
+	self.portal_scale = go.get_scale_uniform() * portal_scale
+	go.set_scale(self.portal_scale)
+
+	-- if self.color ~= nil then
+	if self.portal_id >= 0 then
+		-- msg.post("#sprite", "play_animation", { id = self.color })
+		local color = colors[self.portal_id+1]
+		if (self.portal_in) then
+			particlefx.play("#portal_in")
+			particlefx.set_constant("#portal_in", "sparkles", "tint", color)
+			particlefx.set_constant("#portal_in", "scorch", "tint", color)
+		else
+			particlefx.play("#portal_out")
+			particlefx.set_constant("#portal_out", "sparkles", "tint", color)
+			particlefx.set_constant("#portal_out", "scorch", "tint", color)
+		end
+		
+	else
+		-- msg.post("#sprite", "disable")
+	end
+end
+
+function on_message(self, message_id, message, sender)
+
+end
